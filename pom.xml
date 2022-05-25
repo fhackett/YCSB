@@ -183,6 +183,7 @@ LICENSE file.
     <module>hbase2</module>
     <module>ignite</module>
     <module>infinispan</module>
+    <module>ironkv</module>
     <module>jdbc</module>
     <module>kudu</module>
     <module>maprdb</module>
@@ -203,9 +204,9 @@ LICENSE file.
     <module>solr7</module>
     <module>tarantool</module>
     <module>tablestore</module>
+    <module>vard</module>
     <module>voltdb</module>
     <module>zookeeper</module>
-    <module>vard</module>
   </modules>
 
   <build>
