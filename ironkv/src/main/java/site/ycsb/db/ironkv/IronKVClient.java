@@ -57,7 +57,11 @@ public class IronKVClient extends DB {
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
     Try<byte[]> resultBuffer = kvClient.get((table + "/" + key).getBytes());
     if(resultBuffer.isFailure()) {
-      return Status.ERROR;
+      if(resultBuffer.failed().get() instanceof com.github.fhackett.ironkvclient.IronKVClient.GetFailedError) {
+        return Status.ERROR;
+      } else {
+        throw new RuntimeException(resultBuffer.failed().get());
+      }
     }
     deserializeValues(resultBuffer.get(), result);
     return Status.OK;
@@ -101,7 +105,11 @@ public class IronKVClient extends DB {
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
     Try<BoxedUnit> result = kvClient.put((table + "/" + key).getBytes(), serializeValues(values));
     if(result.isFailure()) {
-      return Status.ERROR;
+      if(result.failed().get() instanceof com.github.fhackett.ironkvclient.IronKVClient.PutFailedError) {
+        return Status.ERROR;
+      } else {
+        throw new RuntimeException(result.failed().get());
+      }
     } else {
       return Status.OK;
     }
@@ -111,7 +119,11 @@ public class IronKVClient extends DB {
   public Status delete(String table, String key) {
     Try<BoxedUnit> result = kvClient.del((table + "/" + key).getBytes());
     if(result.isFailure()) {
-      return Status.ERROR;
+      if(result.failed().get() instanceof com.github.fhackett.ironkvclient.IronKVClient.DeleteFailedError) {
+        return Status.ERROR;
+      } else {
+        throw new RuntimeException(result.failed().get());
+      }
     } else {
       return Status.OK;
     }
