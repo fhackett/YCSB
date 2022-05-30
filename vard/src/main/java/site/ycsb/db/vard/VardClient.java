@@ -34,28 +34,34 @@ public class VardClient extends DB {
   }
 
   private void deserializeValues(ByteBuffer buffer, Map<String, ByteIterator> result) {
-    try {
-      ByteArrayInputStream byteArrayInputStream =
-          new ByteArrayInputStream(buffer.array(), buffer.position(), buffer.limit());
-      DataInputStream in = new DataInputStream(byteArrayInputStream);
-      while(byteArrayInputStream.available() > 0) {
-        String name = in.readUTF();
-        int len = in.readShort();
-        ByteArrayOutputStream builder = new ByteArrayOutputStream();
-        for(int i = 0; i < len; i++) {
-          builder.write(in.readByte());
-        }
-        result.put(name, new ByteArrayByteIterator(builder.toByteArray()));
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+//    try {
+//      // do nothing
+////      ByteArrayInputStream byteArrayInputStream =
+////          new ByteArrayInputStream(buffer.array(), buffer.position(), buffer.limit());
+////      DataInputStream in = new DataInputStream(byteArrayInputStream);
+////      while(byteArrayInputStream.available() > 0) {
+////        String name = in.readUTF();
+////        int len = in.readShort();
+//////        ByteArrayOutputStream builder = new ByteArrayOutputStream();
+//////        for(int i = 0; i < len; i++) {
+//////          builder.write(in.readByte());
+//////        }
+//////        result.put(name, new ByteArrayByteIterator(builder.toByteArray()));
+////        result.put(name, new ByteArrayByteIterator(new byte[len]));
+////      }
+//    } catch (IOException e) {
+//      throw new RuntimeException(e);
+//    }
   }
 
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
     Try<ByteBuffer> resultBuffer = vardClient.get(StandardCharsets.UTF_8.encode(table + "/" + key));
     if(resultBuffer.isFailure()) {
+      if(resultBuffer.failed().get() instanceof com.github.fhackett.vardclient.VardClient.NotFoundError) {
+        return Status.OK;
+      }
+      resultBuffer.failed().get().printStackTrace();
       return Status.ERROR;
     }
     deserializeValues(resultBuffer.get(), result);
@@ -83,12 +89,13 @@ public class VardClient extends DB {
     try {
       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       DataOutputStream out = new DataOutputStream(byteArrayOutputStream);
-      for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
-        out.writeUTF(entry.getKey());
-        byte[] array = entry.getValue().toArray();
-        out.writeShort(array.length);
-        out.write(array);
-      }
+      out.writeShort(values.size());
+//      for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+//        out.writeUTF(entry.getKey());
+//        byte[] array = entry.getValue().toArray();
+//        out.writeShort(array.length);
+//        //out.write(array);
+//      }
       out.flush();
       return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
     } catch (IOException e) {
@@ -101,6 +108,7 @@ public class VardClient extends DB {
     Try<BoxedUnit> result = vardClient.put(
         StandardCharsets.UTF_8.encode(table + "/" + key), serializeValues(values));
     if(result.isFailure()) {
+      result.failed().get().printStackTrace();
       return Status.ERROR;
     } else {
       return Status.OK;
@@ -111,6 +119,7 @@ public class VardClient extends DB {
   public Status delete(String table, String key) {
     Try<BoxedUnit> result = vardClient.del(StandardCharsets.UTF_8.encode(table + "/" + key));
     if(result.isFailure()) {
+      result.failed().get().printStackTrace();
       return Status.ERROR;
     } else {
       return Status.OK;
