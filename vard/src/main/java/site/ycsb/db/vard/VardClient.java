@@ -16,6 +16,7 @@ public class VardClient extends DB {
   private com.github.fhackett.vardclient.VardClient vardClient;
 
   private static final String VARD_ENDPOINTS = "vard.endpoints";
+  private static final String VARD_IVY_MODE = "vard.ivy_mode";
 
   @Override
   public void init() throws DBException {
@@ -23,6 +24,7 @@ public class VardClient extends DB {
 
     vardClient = com.github.fhackett.vardclient.VardClient.builder()
         .withEndpoints(properties.getProperty(VARD_ENDPOINTS))
+        .withIvyMode(Boolean.parseBoolean(properties.getProperty(VARD_IVY_MODE, "false")))
         .build();
   }
 
